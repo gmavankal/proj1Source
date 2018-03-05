@@ -1,0 +1,199 @@
+---
+title: "BomMavProj"
+author: "Go Mavankal"
+date: "February 19, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+#Release memory to load big data sets...
+rm(list = ls())
+gc()
+par(mfrow=c(1,1))
+# install the Quandl package which is a repository of stock data among others
+library(ggplot2)
+# quantmod - get stock prices; useful stock analysis functions - not useful since Yahoo finance stopped support
+library(quantmod)
+# modelr - geom_ref_line() function
+install.packages('modelr')
+library(modelr)
+## rio makes reading and writing files easy.
+## rio uses the file extension of a file name to determine what kind of file it is
+install.packages("rio")
+library("rio")
+install.packages("Quandl")
+library(Quandl)
+Quandl.api_key("6jzG1usU8GQFJg17LH6i")
+AMZNstk = Quandl("WIKI/AMZN")
+PGstk = Quandl("WIKI/PG")
+XOMstk = Quandl("WIKI/XOM")
+JPMstk = Quandl("WIKI/JPM")
+JNJstk = Quandl("WIKI/JNJ")
+BAstk = Quandl("WIKI/BA")
+AAPLstk = Quandl("WIKI/AAPL")
+DWDPstk = Quandl("WIKI/DWDP")
+SPGstk = Quandl("WIKI/SPG")
+VZstk = Quandl("WIKI/VZ")
+NEEstk = Quandl("WIKI/NEE")
+DDstk = Quandl("WIKI/DD")
+DOWstk = Quandl("WIKI/DOW")
+
+## Add another ("Stock") coloumn in Datasets using cbind command
+
+AMZNstk <-cbind(AMZNstk,Stock="")
+PGstk <-cbind(PGstk,Stock="")
+XOMstk <-cbind(XOMstk,Stock="")
+JPMstk <-cbind(JPMstk,Stock="")
+JNJstk <-cbind(JNJstk,Stock="")
+BAstk <-cbind(BAstk,Stock="")
+AAPLstk <-cbind(AAPLstk,Stock="")
+DWDPstk <-cbind(DWDPstk,Stock="")
+SPGstk <-cbind(SPGstk,Stock="")
+VZstk <-cbind(VZstk,Stock="")
+NEEstk <-cbind(NEEstk,Stock="")
+DDstk <-cbind(DDstk,Stock="")
+DOWstk <-cbind(DOWstk,Stock="")
+
+## DD and DOW combined to form DWDP
+## Populate the stock column with the stock ticker
+
+AMZNstk$Stock<-paste(AMZNstk$Stock,"AMZN", sep = "")
+PGstk$Stock<-paste(PGstk$Stock,"PG", sep = "")
+XOMstk$Stock<-paste(XOMstk$Stock,"XOM", sep = "")
+JPMstk$Stock<-paste(JPMstk$Stock,"JPM", sep = "")
+JNJstk$Stock<-paste(JNJstk$Stock,"JNJ", sep = "")
+BAstk$Stock<-paste(BAstk$Stock,"BA", sep = "")
+AAPLstk$Stock<-paste(AAPLstk$Stock,"AAPL", sep = "")
+DWDPstk$Stock<-paste(DWDPstk$Stock,"DWDP", sep = "")
+SPGstk$Stock<-paste(SPGstk$Stock,"SPG", sep = "")
+VZstk$Stock<-paste(VZstk$Stock,"VZ", sep = "")
+NEEstk$Stock<-paste(NEEstk$Stock,"NEE", sep = "")
+DDstk$Stock<-paste(DDstk$Stock,"DD", sep = "")
+DOWstk$Stock<-paste(DOWstk$Stock,"DOW", sep = "")
+
+## adapted from https://www.analyticsvidhya.com/blog/2017/09/comparative-stock-analysis/
+
+## Convert the Date to as.Date() from string
+AMZNstk$Date<-as.Date(AMZNstk$Date)
+PGstk$Date<-as.Date(PGstk$Date)
+XOMstk$Date<-as.Date(XOMstk$Date)
+JPMstk$Date<-as.Date(JPMstk$Date)
+JNJstk$Date<-as.Date(JNJstk$Date)
+BAstk$Date<-as.Date(BAstk$Date)
+AAPLstk$Date<-as.Date(AAPLstk$Date)
+DWDPstk$Date<-as.Date(DWDPstk$Date)
+SPGstk$Date<-as.Date(SPGstk$Date)
+VZstk$Date<-as.Date(VZstk$Date)
+NEEstk$Date<-as.Date(NEEstk$Date)
+DDstk$Date<-as.Date(DDstk$Date)
+DOWstk$Date<-as.Date(DOWstk$Date)
+
+## Consolidate under one dataset for the portfolio
+BMPortfolio<-rbind(AMZNstk,PGstk,XOMstk,JPMstk,JNJstk,BAstk,AAPLstk,DWDPstk, SPGstk,VZstk,NEEstk,DDstk,DOWstk)
+
+
+
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/AMZN.jpg"))
+qplot(AMZNstk$Date, AMZNstk$Close, data=AMZNstk, geom=c("point", "smooth"), 
+   method="lm", formula=y~x, colors(discrete_scale()) , 
+   main="Regression of Close on Date AMZN", 
+   xlab="Date", ylab="Close")
+dev.off()
+
+
+
+
+nrow(BMPortfolio)
+summary(BMPortfolio)
+## save the portfolio data as a csv file
+export(BMPortfolio, "D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/BMPortfolio.csv")
+# cleanup
+unlink("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/BMPortfolio.csv")
+
+## for each stock save a plot of the time series data decomposed, DWDP did not have enough data for that
+## bug - the file name specified for jpeg is not used, manually rename it and add a jpeg extension so the type is recognized later
+
+data <- Quandl("WIKI/AMZN", collapse="monthly", type="ts")
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/AMZN.jpg"))
+plot(stl(data[,4],s.window="periodic"), main = "AMZN Decomposition")
+dev.off()
+
+data <- Quandl("WIKI/PG", collapse="monthly", type="ts")
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/PG.jpeg"))
+plot(stl(data[,4],s.window="periodic"), main = "PG Decomposition")
+dev.off()
+
+data <- Quandl("WIKI/XOM", collapse="monthly", type="ts")
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/XOM.jpeg"))
+plot(stl(data[,4],s.window="periodic"), main = "XOM Decomposition")
+dev.off()
+
+data <- Quandl("WIKI/JPM", collapse="monthly", type="ts")
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/JPM.jpeg"))
+plot(stl(data[,4],s.window="periodic"), main = "JPM Decomposition")
+dev.off()
+
+data <- Quandl("WIKI/JNJ", collapse="monthly", type="ts")
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/JNJ.jpeg"))
+plot(stl(data[,4],s.window="periodic"), main = "JNJ Decomposition")
+dev.off()
+
+data <- Quandl("WIKI/BA", collapse="monthly", type="ts")
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/BA.jpeg"))
+plot(stl(data[,4],s.window="periodic"), main = "BA Decomposition")
+dev.off()
+
+data <- Quandl("WIKI/AAPL", collapse="monthly", type="ts")
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/AAPL.jpeg"))
+plot(stl(data[,4],s.window="periodic"), main = "AAPL Decomposition")
+dev.off()
+
+data <- Quandl("WIKI/SPG", collapse="monthly", type="ts")
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/SPG.jpeg"))
+plot(stl(data[,4],s.window="periodic"), main = "SPG Decomposition")
+dev.off()
+
+data <- Quandl("WIKI/VZ", collapse="monthly", type="ts")
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/VZ.jpeg"))
+plot(stl(data[,4],s.window="periodic"), main = "VZ Decomposition")
+dev.off()
+
+data <- Quandl("WIKI/NEE", collapse="monthly", type="ts")
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/NEE.jpeg"))
+plot(stl(data[,4],s.window="periodic"), main = "NEE Decomposition")
+dev.off()
+
+data <- Quandl("WIKI/DD", collapse="monthly", type="ts")
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/DD.jpeg"))
+plot(stl(data[,4],s.window="periodic"), main = "DD Decomposition")
+dev.off()
+
+data <- Quandl("WIKI/DOW", collapse="monthly", type="ts")
+jpeg(file("D:/03-Repos/RStudio/SpecialTopicsSpring2018/Project/DOW.jpeg"))
+plot(stl(data[,4],s.window="periodic"), main = "DOW Decomposition")
+dev.off()
+
+
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r }
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
